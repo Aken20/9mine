@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-dotenv
+pymongo
+pymongo[asyncio]
+beanie>=1.25.0
+python-jose[cryptography]
+passlib[bcrypt]
+pyjwt
+python-multipart

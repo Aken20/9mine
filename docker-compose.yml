@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./Backend
+    image: backend
+    container_name: backend
+    expose:
+      - "8000"
+    volumes:
+      - ./Backend:/app
+      - ./Backend/media:/app/media
+    env_file:
+      - .env
+    networks:
+      - services
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 30s
+      timeout: 30s
+      retries: 15
+    restart: unless-stopped
+
+  nginx:
+    build: ./nginx
+    image: nginx
+    container_name: nginx
+    ports:
+      - "443:443"
+    volumes:
+      - ssl:/etc/nginx/ssl
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - services
+    restart: unless-stopped
+
+  frontend:
+    build: ./Frontend
+    image: frontend
+    container_name: frontend
+    env_file:
+      - .env
+    expose:
+      - "3000"
+    volumes:
+      - ./Frontend:/frontend
+      - frontend_node_modules:/frontend/node_modules
+    networks:
+      - services
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 30s
+      retries: 15
+    restart: unless-stopped
+
+  mongodb:
+    build: ./MongoDB
+    image: mongo
+    container_name: mongodb
+    expose:
+      - "27017"
+    volumes:
+      - mongo:/data/db
+    networks:
+      - services
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')", "localhost:27017/test", "--quiet"]
+      interval: 30s
+      timeout: 30s
+      retries: 15
+    restart: unless-stopped
+
+  mongo-express:
+    image: mongo-express
+    container_name: mongo-express
+    expose:
+      - "8081"
+    ports:
+      - "8081:8081"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - services
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  mongo:
+    name: mongo
+  ssl: 
+    name: ssl
+  frontend:
+    name: frontend
+  backend:
+    name: backend
+  frontend_node_modules:
+    name: frontend_node_modules
+
+
+
+networks:
+  services:
+    name: services
+    driver: bridge

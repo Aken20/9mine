@@ -1,0 +1,12 @@
+*.pdf
+*.mp4
+node_modules
+*.log
+*.DS_Store
+.env
+*.pem
+__pycache__
+.env
+.DS_Store
+Backendc*
+.env
